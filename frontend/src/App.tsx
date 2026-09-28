@@ -46,7 +46,11 @@ const getApiBase = () => {
       return 'http://127.0.0.1:8000';
     }
   }
-  return import.meta.env.VITE_API_URL || 'https://nudge-backend-ee6k.onrender.com';
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (envUrl && !envUrl.includes('backend-theta-lilac-18')) {
+    return envUrl;
+  }
+  return 'https://nudge-backend-ee6k.onrender.com';
 };
 const API_BASE = getApiBase();
 
