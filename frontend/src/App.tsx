@@ -40,7 +40,15 @@ interface PendingApproval {
   resolved: boolean;
 }
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+const getApiBase = () => {
+  if (typeof window !== 'undefined') {
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return 'http://127.0.0.1:8000';
+    }
+  }
+  return import.meta.env.VITE_API_URL || 'https://nudge-backend-ee6k.onrender.com';
+};
+const API_BASE = getApiBase();
 
 export function App() {
   const [goal, setGoal] = useState(
@@ -163,9 +171,21 @@ export function App() {
       const data = await res.json();
       setCurrentRunId(data.run_id);
       connectSSE(data.run_id);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to launch run', err);
       setIsRunning(false);
+      setEvents([
+        {
+          id: 'evt_err_init',
+          run_id: 'error',
+          ts: new Date().toISOString(),
+          type: 'error',
+          step: 0,
+          payload: { reason: `Connection to backend (${API_BASE}) failed: ${err?.message || err}. Please ensure backend is running.` },
+          prev_hash: '0',
+          hash: '0'
+        }
+      ]);
     }
   };
 
