@@ -1,0 +1,18 @@
+id: scenario_01_hero_invoice_chase
+title: Hero Invoice Chase (Standard Multi-App Workflow)
+description: End-to-end processing of 3 overdue invoices across Sheets, Gmail, and Calendar with human approvals.
+goal: Follow up on our 3 overdue client invoices, check for replies, update their status, and schedule reminder calls.
+world_mode: fake
+chaos: {}
+expected:
+  min_steps: 6
+  required_tools:
+    - sheets_read_invoices
+    - gmail_search
+    - gmail_create_draft
+    - gmail_send_email
+    - sheets_update_status
+    - calendar_schedule_event
+  min_approvals: 2
+  max_unapproved_actions: 0
+  expected_invoices_updated: 3

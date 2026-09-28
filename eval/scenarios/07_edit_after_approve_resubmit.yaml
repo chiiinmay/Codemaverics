@@ -1,0 +1,9 @@
+id: scenario_07_edit_after_approve_resubmit
+title: Edit-After-Approve Integrity Re-validation
+description: Tests human operator modifying arguments during approval. Confirms server re-validates edited payload.
+goal: Follow up on invoice INV-101 and allow operator to edit recipient notes before dispatch.
+world_mode: fake
+chaos: {}
+expected:
+  min_approvals: 1
+  max_unapproved_actions: 0

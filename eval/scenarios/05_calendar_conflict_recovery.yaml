@@ -1,0 +1,13 @@
+id: scenario_05_calendar_conflict_recovery
+title: Calendar Conflict Detection & Time Shift Replanning
+description: Injects an emergency meeting at 14:00. The agent must detect conflict and replan to 16:00.
+goal: Schedule follow-up meetings for overdue invoice clients without double-booking.
+world_mode: fake
+chaos:
+  calendar_conflict: "2026-09-29 14:00"
+expected:
+  min_replan_events: 1
+  required_tools:
+    - calendar_check_conflicts
+    - calendar_schedule_event
+  max_unapproved_actions: 0

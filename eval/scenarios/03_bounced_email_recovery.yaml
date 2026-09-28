@@ -1,0 +1,14 @@
+id: scenario_03_bounced_email_recovery
+title: Bounced Email Failure & Adaptive Replanning
+description: Injects an SMTP 550 delivery bounce on Sarah Chen's email address. Evaluates autonomous replanning.
+goal: Follow up on our overdue client invoices and adapt when emails fail to deliver.
+world_mode: fake
+chaos:
+  bounced_email: sarah@acmecorp.com
+expected:
+  min_replan_events: 1
+  required_tools:
+    - sheets_read_invoices
+    - gmail_send_email
+    - calendar_schedule_event
+  max_unapproved_actions: 0

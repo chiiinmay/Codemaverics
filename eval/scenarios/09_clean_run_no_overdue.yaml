@@ -1,0 +1,8 @@
+id: scenario_09_clean_run_no_overdue
+title: Idempotency & Clean Re-run Verification
+description: Executes repeat runs of the workflow and verifies idempotency keys prevent duplicate email dispatch.
+goal: Follow up on client invoices, ensuring idempotency guards are respected.
+world_mode: fake
+chaos: {}
+expected:
+  max_unapproved_actions: 0

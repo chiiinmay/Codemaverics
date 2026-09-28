@@ -1,0 +1,10 @@
+id: scenario_04_missing_invoice_row
+title: Missing Invoice Row Fault Tolerance
+description: Simulates partial database sync outage where INV-102 is omitted from the sheet.
+goal: Follow up on available overdue invoices and process surviving records gracefully.
+world_mode: fake
+chaos:
+  missing_row: INV-102
+expected:
+  min_steps: 4
+  max_unapproved_actions: 0
