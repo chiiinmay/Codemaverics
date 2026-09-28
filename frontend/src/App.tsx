@@ -87,21 +87,50 @@ export function App() {
     }
   }, [events]);
 
-  // Periodic poll for world state & pending approvals
+  // Periodic poll for world state, events & pending approvals
   useEffect(() => {
     const timer = setInterval(async () => {
       if (currentRunId) {
         try {
+          // 1. Fetch world state
           const res = await fetch(`${API_BASE}/api/runs/${currentRunId}/state`);
           if (res.ok) {
             const data = await res.json();
             setWorldState(data.world_state);
           }
+
+          // 2. Resilient events-list sync
+          const evRes = await fetch(`${API_BASE}/api/runs/${currentRunId}/events-list`);
+          if (evRes.ok) {
+            const evData = await evRes.json();
+            if (evData.events && Array.isArray(evData.events) && evData.events.length > 0) {
+              setEvents(evData.events);
+              const lastEvt = evData.events[evData.events.length - 1];
+              if (lastEvt.type === 'approval_required') {
+                setPendingApproval((prev) => {
+                  if (prev && prev.action_id === lastEvt.payload.action_id) return prev;
+                  setEditedPayload(JSON.stringify(lastEvt.payload.args, null, 2));
+                  return {
+                    action_id: lastEvt.payload.action_id,
+                    run_id: currentRunId,
+                    tool_name: lastEvt.payload.tool,
+                    args: lastEvt.payload.args,
+                    created_at: lastEvt.ts,
+                    resolved: false
+                  };
+                });
+              } else if (lastEvt.type === 'approval_decision') {
+                setPendingApproval(null);
+              } else if (lastEvt.type === 'done' || (lastEvt.type === 'error' && lastEvt.payload?.fatal_error)) {
+                setIsRunning(false);
+              }
+            }
+          }
         } catch (e) {
           // backend offline or connecting
         }
       }
-    }, 1200);
+    }, 800);
     return () => clearInterval(timer);
   }, [currentRunId]);
 

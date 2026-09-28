@@ -127,6 +127,17 @@ async def start_run(req: StartRunRequest):
     session.task = asyncio.create_task(_runner())
     return {"run_id": run_id, "status": "started", "goal": req.goal, "world_mode": req.world_mode}
 
+@app.get("/api/runs/{run_id}/events-list")
+async def get_events_list(run_id: str):
+    session = active_sessions.get(run_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Run session not found")
+    return {
+        "run_id": run_id,
+        "total": len(session.events.events),
+        "events": [evt.model_dump() for evt in session.events.events]
+    }
+
 @app.get("/api/runs/{run_id}/events")
 async def stream_events(run_id: str):
     session = active_sessions.get(run_id)
@@ -136,13 +147,17 @@ async def stream_events(run_id: str):
     q = session.events.subscribe()
 
     async def event_generator():
+        # Immediate handshake ping to flush HTTP headers instantly
+        yield ": ping\n\n"
         try:
             while True:
-                evt = await q.get()
-                yield f"data: {evt.model_dump_json()}\n\n"
-                if evt.type in ("done", "error") and "fatal_error" in evt.payload:
-                    # Final event sent
-                    break
+                try:
+                    evt = await asyncio.wait_for(q.get(), timeout=15.0)
+                    yield f"data: {evt.model_dump_json()}\n\n"
+                    if evt.type in ("done", "error") and "fatal_error" in evt.payload:
+                        break
+                except asyncio.TimeoutError:
+                    yield ": keepalive\n\n"
         except asyncio.CancelledError:
             pass
         finally:
@@ -154,7 +169,10 @@ async def stream_events(run_id: str):
         headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
-            "X-Accel-Buffering": "no"
+            "X-Accel-Buffering": "no",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET",
+            "Access-Control-Allow-Headers": "*"
         }
     )
 
